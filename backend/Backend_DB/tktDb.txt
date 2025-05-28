@@ -1,0 +1,164 @@
+CREATE DATABASE IF NOT EXISTS HelpDeskDb;
+USE HelpDeskDb;
+
+-- Tabla de roles
+CREATE TABLE IF NOT EXISTS Rol (
+  R_id INT AUTO_INCREMENT PRIMARY KEY,
+  R_Name VARCHAR(100) NOT NULL,
+  R_description VARCHAR(255) NOT NULL,
+  R_Create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  R_Update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de estados
+CREATE TABLE IF NOT EXISTS Stade (
+  St_id INT AUTO_INCREMENT PRIMARY KEY,
+  St_Name VARCHAR(100) NOT NULL,
+  St_description VARCHAR(255) NOT NULL,
+  St_Create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  St_Update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de empresas
+CREATE TABLE IF NOT EXISTS Companies (
+  C_id INT AUTO_INCREMENT PRIMARY KEY,
+  C_Name VARCHAR(100) NOT NULL,
+  C_description VARCHAR(255),
+  C_NIT VARCHAR(20),
+  C_Create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  C_Update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de tipos de ticket
+CREATE TABLE IF NOT EXISTS TType (
+  T_id INT AUTO_INCREMENT PRIMARY KEY,
+  T_Name VARCHAR(100) NOT NULL,
+  T_description VARCHAR(255),
+  T_Create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  T_Update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de niveles
+CREATE TABLE IF NOT EXISTS TLevel (
+  Lvl_id INT AUTO_INCREMENT PRIMARY KEY,
+  Lvl_Name VARCHAR(100) NOT NULL,
+  Lvl_description VARCHAR(255) NOT NULL,
+  Lvl_Rol_id INT,
+  Lvl_Create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  Lvl_Update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (Lvl_Rol_id) REFERENCES Rol(R_id)
+);
+
+-- Tabla de usuarios
+CREATE TABLE IF NOT EXISTS users (
+  U_id INT AUTO_INCREMENT PRIMARY KEY,
+  U_name VARCHAR(100) NOT NULL,
+  U_email VARCHAR(255) NOT NULL UNIQUE,
+  U_password VARCHAR(255) NOT NULL,
+  U_phone VARCHAR(20),
+  U_rol INT,
+  U_estade INT,
+  U_company INT,
+  U_area VARCHAR(100),
+  U_last_login DATETIME,
+  U_create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  U_update_date TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (U_rol) REFERENCES Rol(R_id),
+  FOREIGN KEY (U_estade) REFERENCES Stade(St_id),
+  FOREIGN KEY (U_company) REFERENCES Companies(C_id)
+);
+
+CREATE TABLE Criticality (
+    crit_Id INT PRIMARY KEY AUTO_INCREMENT,
+    crit_Name VARCHAR(50) NOT NULL,       -- Ej: 'Alta', 'Media', 'Baja'
+    crit_Description TEXT
+);
+
+
+-- Tabla de tickets
+CREATE TABLE IF NOT EXISTS tkts (
+  tkt_Id INT AUTO_INCREMENT PRIMARY KEY,
+  tkt_Name VARCHAR(100) NOT NULL,
+  tkt_Number VARCHAR(255) NOT NULL UNIQUE,
+  tkt_Description VARCHAR(255) NOT NULL,
+  tkt_UserId_Sol INT NOT NULL,
+  tkt_UserId_Assg INT,
+  tkt_Company_Id INT,
+  tkt_Stade_Id INT,
+  tkt_Rol_Id INT,
+  tkt_Lvl_Id INT,
+  tkt_Crit_Id INT NULL,
+  tkt_type_Id INT,
+  tkt_Create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  tkt_Update DATETIME,
+  tkt_Close DATETIME,
+  tkt_EstimadeTime INT,
+  tkt_start DATETIME,
+  FOREIGN KEY (tkt_UserId_Sol) REFERENCES users(U_id),
+  FOREIGN KEY (tkt_UserId_Assg) REFERENCES users(U_id),
+  FOREIGN KEY (tkt_Company_Id) REFERENCES Companies(C_id),
+  FOREIGN KEY (tkt_Stade_Id) REFERENCES Stade(St_id),
+  FOREIGN KEY (tkt_Rol_Id) REFERENCES Rol(R_id),
+  FOREIGN KEY (tkt_Lvl_Id) REFERENCES TLevel(Lvl_id),
+  FOREIGN KEY (tkt_type_Id) REFERENCES TType(T_id),
+  FOREIGN KEY (tkt_Crit_Id) REFERENCES Criticality(crit_Id)
+);
+
+
+
+INSERT INTO Criticality (crit_Name, crit_Description) VALUES
+('Alta', 'Impacto crítico sobre operaciones o seguridad.'),
+('Media', 'Impacto intermedio, puede esperar atención pero afecta el rendimiento.'),
+('Baja', 'No afecta funcionamiento crítico, puede esperar.');
+
+
+
+-- Datos para tabla Stade (Estados del usuario o ticket)
+INSERT INTO Stade (St_Name, St_description)
+VALUES
+  ('Activo', 'Usuario o recurso habilitado y operativo'),
+  ('Inactivo', 'Usuario o recurso deshabilitado temporalmente'),
+  ('Suspendido', 'Usuario o recurso suspendido por alguna razón'),
+  ('Eliminado', 'Marcado como eliminado, sin acceso'),
+  ('No iniciado', 'Tiquet verificado pero que aun no se ha empezado a gestionar'),
+  ('Pausado', 'Tiquet el cual se encuntra en pausa por caracteristicas externas de lisencias, perimosos, etc'),
+  ('En proceso', 'Tiquet el cual se encuntra en gestion actualmente'),
+  ('Sin gestionar', ' Tiquet el cual no se ha verificado para indica criticidad'),
+  ('Iniciado', 'Tiquete que se  se encuntra en gestion y desarrollo inicial de analisis y verificacion'),
+  ('Terminado','Tiquet con gestion completa, sin actividades adiconales'),
+  ('Validacion','Tiquet gestionado pendiente por retrolimentacion usuario sobre funcionamiento para poder dar cierre a la solicitud');
+
+-- Datos para tabla Companies
+INSERT INTO Companies (C_Name, C_description, C_NIT)
+VALUES
+  ('Empresa Alpha', 'Empresa de servicios tecnológicos', '900123456'),
+  ('Empresa Beta', 'Empresa de soluciones en la nube', '800987654'),
+  ('Cliente Ejemplo', 'Cliente para pruebas del sistema', '777777777');
+
+
+
+-- Datos para tabla TType (tipos de ticket)
+INSERT INTO TType (T_Name, T_description)
+VALUES
+  ('Soporte Técnico', 'Incidencias técnicas del sistema o aplicación'),
+  ('Solicitud', 'Solicitudes de mejora, cambios o accesos'),
+  ('Consulta', 'Preguntas generales o de orientación'),
+  ('Mantenimiento o actualizacion', 'Tareas preventivas o correctivas'),
+  ('Desarrollo básico', 'Solicitudes de desarrollos pequeños o ajustes mínimos.'),
+  ('Desarrollo avanzado', 'Solicitudes de nuevas funcionalidades o módulos completos.');
+  
+INSERT INTO Rol (R_Name, R_description)
+VALUES
+  ('Agente de Soporte', 'Registro y atención inicial de incidentes. Escalamiento de casos complejos.'),
+  ('Técnico Especialista', 'Resolución de incidentes de segundo nivel. Apoyo técnico especializado.'),
+  ('Desarrollador', 'Análisis, desarrollo y despliegue de mejoras o nuevas funcionalidades.'),
+  ('Supervisor', 'Control de calidad, cumplimiento de SLA, reporte de métricas.'),
+  ('Usuario', 'Reporte de problemas, solicitud de mejoras, retroalimentación del servicio.');
+
+-- Datos para tabla TLevel (niveles de atención)
+INSERT INTO TLevel (Lvl_Name, Lvl_description, Lvl_Rol_id)
+VALUES
+  ('Nivel 0', 'Por validar',1),
+  ('Nivel 1', 'Soporte básico, resolución rápida', 1),
+  ('Nivel 2', 'Soporte técnico intermedio', 2),
+  ('Nivel 3', 'Soporte especializado o desarrollo', 3);
